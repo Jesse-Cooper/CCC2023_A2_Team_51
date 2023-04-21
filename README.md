@@ -4,6 +4,6 @@
 
 * Ben Slavec ()
 * Chien-Pu Lin ()
-* Jack Melleuish ()
+* Jack Melleuish (1171367)
 * Jesse Cooper (1091024)
 * Jin Yuan Hee (1072295)
