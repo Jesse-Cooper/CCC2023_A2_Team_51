@@ -24,7 +24,7 @@ Total week meeting time (not including over text): 15 minutes
 **Job(s) Assigned:**
 
 * Ben Slavec - Build model to filter and get sentiment of tweets/toots around public transport
-* Chien-Pu Lin - Continue clouds setup (Ansible/CouchDB) 
+* Chien-Pu Lin - Continue cloud setup (Ansible/CouchDB) 
 * Jack Melleuish - Find mastodon server for collecting toots around public transport and finish code to collect toot with API
 * Jesse Cooper - Find mastodon server for collecting toots around public transport and finish code to collect toot with API. Also, collect datasets on SUDO around public transport
-* Jin Yuan Hee - Continue clouds setup (Ansible/CouchDB)
+* Jin Yuan Hee - Continue cloud setup (Ansible/CouchDB)
