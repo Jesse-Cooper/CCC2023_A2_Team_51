@@ -19,12 +19,12 @@ import pandas as pd
 
 #m.stream_public(Listener())
 
-URL = 'https://mastodon.online/api/v1/timelines/public'
+URL = 'https://mastodon.social/api/v1/timelines/public'
 params = {
     'limit': 40
 }
 
-since = pd.Timestamp('now', tz='utc') - pd.DateOffset(hour=2)
+since = pd.Timestamp('now', tz='utc') - pd.DateOffset(hour=1)
 is_end = False
 
 results = []
