@@ -25,7 +25,7 @@ Total week meeting time (not including over text): 13 minutes
 **Job(s) Assigned:**
 
 * Ben Slavec - Create a base sentiment analysis system for tweets/toots and explore SUDO for datasets
-* Chien-Pu Lin - Begin exploring the clouds setup (Ansible/CouchDB) 
+* Chien-Pu Lin - Begin exploring the cloud setup (Ansible/CouchDB) 
 * Jack Melleuish - Begin exploring the Mastodon API
 * Jesse Cooper - Begin exploring the Mastodon API and explore SUDO for datasets
-* Jin Yuan Hee - Begin exploring the clouds setup (Ansible/CouchDB) 
+* Jin Yuan Hee - Begin exploring the cloud setup (Ansible/CouchDB) 
