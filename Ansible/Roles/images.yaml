@@ -1,0 +1,17 @@
+# This is to show every avaialble images 
+- name: Retrieving available images 
+  openstack.cloud.image_info:
+  register: result
+
+# Retrieve images' name & id 
+- name: Retrieve images' name and id 
+  ansible.builtin.set_fact: 
+    image_facts: "{{ image_facts|default([]) + [ {'Image Name': item.name, 'Image ID': item.id} ] }}"
+  loop: '{{ image_result.openstack_image }}'
+  when: item.name is defined 
+
+# Returning the image if its available 
+- name: Show images
+  ansible.builtin.debug:
+    msg: "Image name: {{ item.name }}; Image id: {{ item.id }}"
+  loop: '{{ image_facts }}'

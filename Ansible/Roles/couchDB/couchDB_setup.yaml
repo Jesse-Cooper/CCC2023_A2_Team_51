@@ -1,0 +1,65 @@
+- name: Change masternode bind address
+  # shell: curl -u {{ user }}:{{ pass }} -X PUT -H 'Content-Type:application/json' http://{{ masternode }}:5984/_node/couchdb@{{ masternode }}/_config/httpd/bind_address -d '{{ bind_address }}'
+  shell: curl -u user:pass -X PUT -H 'Content-Type:application/json' http://172.26.136.58:5984/_node/couchdb@172.26.136.58/_config/httpd/bind_address -d '"0.0.0.0"'
+
+- name: Change worker1 bind address
+  shell: curl -u user:pass -X PUT -H 'Content-Type:application/json' http://172.26.130.201:5984/_node/couchdb@172.26.130.201/_config/httpd/bind_address -d '"0.0.0.0"'
+
+- name: Change worker2 bind address
+  shell: curl -u user:pass -X PUT -H 'Content-Type:application/json' http://172.26.136.54:5984/_node/couchdb@172.26.136.54/_config/httpd/bind_address -d '"0.0.0.0"'
+
+# Add nodes to CouchDB cluster
+- name: Add nodes to CouchDB cluster
+  uri:
+    url: http://{{ masternode }}:5984/_cluster_setup
+    method: POST
+    user: "{{ user }}"
+    password: "{{ pass }}"
+    force_basic_auth: yes
+    status_code: 200, 201
+    body_format: json
+    body: "{\"action\": \"enable_cluster\", \"bind_address\": \"0.0.0.0\", \"username\":\"{{ user }}\", \"password\": \"{{ pass }}\", \"port\": \"5984\", \"remote_node\": \"{{ item }}\", \"node_count\": \"3\",\"remote_current_user\": \"{{ user }}\", \"remote_current_password\":\"{{ pass }}\"}"
+    headers:
+      Content-Type: "application/json" 
+  loop: "{{ groups['workers'] }}"
+
+# Join nodes to CouchDB cluster
+- name: Join nodes to CouchDB cluster
+  uri:
+    url: http://{{ masternode }}:5984/_cluster_setup
+    method: POST
+    user: "{{ user }}"
+    password: "{{ pass }}"
+    force_basic_auth: yes
+    status_code: 200, 201
+    body_format: json
+    body: "{\"action\":\"add_node\",\"host\":\"{{ item }}\",\"port\":\"5984\",\"username\":\"{{ user }}\",\"password\":\"{{ pass }}\"}"
+    headers:
+      Content-Type: "application/json"  
+  loop: "{{ groups['workers'] }}"
+
+  
+# Empty request to avoid error messages when finishing cluster setup
+- name: Empty request to avoid error messages when finishing cluster setup
+  uri:
+    url: http://{{ masternode }}:5984/
+    method: GET
+    user: "{{ user }}"
+    password: "{{ pass }}"
+    force_basic_auth: yes
+    return_content: yes
+
+# Finish cluster setup
+- name: Finish cluster setup
+  uri:
+    url: http://{{ masternode }}:5984/_cluster_setup
+    method: POST
+    user: "{{ user }}"
+    password: "{{ pass }}"
+    force_basic_auth: yes
+    status_code: 200, 201
+    body_format: json
+    body: "{\"action\":\"finish_cluster\"}"    
+    headers:
+      Content-Type: "application/json"
+  run_once: true
