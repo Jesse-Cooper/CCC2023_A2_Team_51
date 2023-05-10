@@ -21,34 +21,41 @@ import pandas as pd
 
 URL = 'https://mastodon.social/api/v1/timelines/public'
 params = {
-    'limit': 40
+    'limit': 10000
 }
 
-since = pd.Timestamp('now', tz='utc') - pd.DateOffset(hour=1)
+since = pd.Timestamp('now', tz='utc') - pd.DateOffset(day=7)
 is_end = False
 
 results = []
+total = 0
+max = 1000
+while total < max:
 
-while True:
-    r = requests.get(URL, params=params)
-    toots = json.loads(r.text)
-
-    if len(toots) == 0:
-        break
-    
-    for t in toots:
-        timestamp = pd.Timestamp(t['created_at'], tz='utc')
-        if timestamp <= since:
-            is_end = True
+    while True:
+        r = requests.get(URL, params=params)
+        toots = json.loads(r.text)
+        if len(results) > max:
             break
-            
-        results.append(t)
-    
-    if is_end:
-        break
-    
-    max_id = toots[-1]['id']
-    params['max_id'] = max_id
-    
+
+        if len(toots) == 0:
+            break
+        
+        for t in toots:
+            timestamp = pd.Timestamp(t['created_at'], tz='utc')
+            if timestamp <= since:
+                is_end = True
+                break
+                
+            results.append(t)
+            total = len(results)
+        
+        if is_end:
+            break
+        
+        max_id = toots[-1]['id']
+        params['max_id'] = max_id
+
+results = results[:max]    
 df = pd.DataFrame(results)
-print(df['content'])
+df.to_csv('mastodon_toots.csv')
