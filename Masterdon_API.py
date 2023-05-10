@@ -51,4 +51,4 @@ while True:
     params['max_id'] = max_id
     
 df = pd.DataFrame(results)
-df.to_csv('mastodon.csv')
+print(df['content'])
