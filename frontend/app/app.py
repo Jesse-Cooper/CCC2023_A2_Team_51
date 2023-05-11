@@ -9,8 +9,8 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 # Testing Home Page (Render the test.HTML)
 @app.route('/', methods=['GET', 'POST'])
 def homepage_test():
-    return "hello world"
-    #return render_template('index.html')
+    #return "hello world"
+    return render_template('index.html')
 
 if __name__ == '__main__':
     app.run(host = '0.0.0.0', port = int('5000'), debug = True)

@@ -32,11 +32,11 @@ class Connector:
         except:
             self.database = self.server.create(database)
 
-    def put(self, doc):
+    def put(self, id, doc):
         """
         Put document onto the couchdb datebase
 
         Parameters:
             doc: the doc to put
         """
-        self.database.save(doc)
+        self.database[id] = doc
