@@ -1,7 +1,7 @@
 # Adding proxy 
 
 - name: Adding proxy in /etc/environment
-  become: yes
+  become: true
   blockinfile:
     path: /etc/environment
     block: |
@@ -12,6 +12,6 @@
       no_proxy="localhost,127.0.0.1,localhostaddress,172.16.0.0/12,.melbourne.rc.nectar.org.au,.storage.unimelb.edu.au,.cloud.unimelb.edu.au"
 
 - name: Rebooting machine
-  become: yes
+  become: true
   reboot:
     reboot_timeout: 3000

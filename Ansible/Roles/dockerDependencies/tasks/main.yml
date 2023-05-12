@@ -1,21 +1,21 @@
 # Installing packages/dependencies on host
 - name: Install pip
-  become: yes
+  become: true
   ansible.builtin.apt:
     # add in python3 application into list if needed
     name: ['python3-pip']
     state: latest
-    update_cache: yes
+    update_cache: true
   when: ansible_distribution == "Ubuntu"
 
 - name: Update pip
-  become: yes
+  become: true
   ansible.builtin.pip:
     name: ['pip']
     state: latest
 
 - name: Install dependencies
-  become: yes
+  become: true
   tags: always
   ansible.builtin.apt:
     # add dependencies in the following list if more are needed 
@@ -37,7 +37,7 @@
         "vim",
       ]
     state: latest
-    update_cache: yes
+    update_cache: true
     install_recommends: no
 
   
