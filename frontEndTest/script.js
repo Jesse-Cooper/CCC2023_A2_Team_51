@@ -5,7 +5,7 @@ function request_test()
 
     $.ajax({
         type: "POST",
-        url: "<URL OF FLACK FILE ON OTHER INSTANCE>/generate_plot",
+        url: "http://172.26.136.42:5000/generate_plot",
         data: JSON.stringify({x_data: x_data, y_data: y_data}),
         contentType: "application/json; charset=utf-8",
         dataType: "binary",
