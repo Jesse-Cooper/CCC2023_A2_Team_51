@@ -22,6 +22,21 @@ def read_json_file_iteratively(filename):
         for item in parser:
             yield item
             
+#filter
+def filter_tweets_by_keywords(tweets):
+    filtered_tweets = []
+    for tweet in tweets:
+        if any(keyword in tweet['text'].lower() for keyword in ['train', 'bus', 'tram', 'station']):
+            filtered_tweets.append(tweet)
+    return filtered_tweets
+
+def filter_tweets_by_location(tweets):
+    filtered_tweets = []
+    for tweet in tweets:
+        if tweet['location'] is not None:
+            filtered_tweets.append(tweet)
+    return filtered_tweets
+
 ###not needed probably 
 def merge_city_tweets(city_tweets_list):
     merged = Counter()
