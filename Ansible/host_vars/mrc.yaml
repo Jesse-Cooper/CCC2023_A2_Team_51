@@ -10,7 +10,7 @@ volumes:
   - vol_name: vol-for-instance1 
     vol_size: 60
 
-  - vol_name: vol-for-intance2
+  - vol_name: vol-for-instance2
     vol_size: 60
 
   - vol_name: vol-for-instance3
@@ -52,18 +52,18 @@ security_groups:
 
 # Instances 
 instances: 
-  - name: intance1
+  - name: instance1
     securitygroups: ['sec_ssh', 'couchdb_sec_group1', 'couchdb_sec_group2', 'couchdb_sec_group3']
     volumes: vol-for-instance1
 
-  - name: intance2
+  - name: instance2
     securitygroups: ['sec_ssh', 'couchdb_sec_group1', 'couchdb_sec_group2', 'couchdb_sec_group3']
     volumes: vol-for-instance2
 
-  - name: intance3
+  - name: instance3
     securitygroups: ['sec_ssh', 'couchdb_sec_group1', 'couchdb_sec_group2', 'couchdb_sec_group3']
     volumes: vol-for-instance3
 
-  - name: intance4
+  - name: instance4
     securitygroups: ['sec_ssh', 'sec_http']
     volumes: vol-for-instance4
