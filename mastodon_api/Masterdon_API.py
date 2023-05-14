@@ -6,9 +6,6 @@ URL = 'https://mastodon.social/api/v1/timelines/public'
 params = {
     'limit': 40
 }
-
-since = pd.Timestamp('now', tz='utc') - pd.DateOffset(hour=1)
-is_end = False
 results = []
 total = 0  
 while True:
