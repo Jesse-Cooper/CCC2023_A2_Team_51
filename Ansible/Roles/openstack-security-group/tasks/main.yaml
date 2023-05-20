@@ -1,5 +1,6 @@
+---
 # Create a security group
-- name: Create a security group
+- name: Create security groups
   openstack.cloud.security_group:
     name: "{{ item.name }}"
     description: "{{ item.description }}"

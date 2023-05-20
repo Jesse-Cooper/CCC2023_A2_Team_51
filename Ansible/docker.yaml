@@ -1,0 +1,9 @@
+- hosts: All
+  vars_files:
+    - host_vars/docker.yaml
+  gather_facts: false
+
+  roles:
+    - role: docker-common
+    - role: docker-mount-volume
+    - role: docker-install

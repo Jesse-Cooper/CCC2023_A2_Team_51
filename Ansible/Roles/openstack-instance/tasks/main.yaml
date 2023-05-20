@@ -1,19 +1,17 @@
-# Cited to AlwynPan's Github which showing demo during Ansible class
-
-## Change item.server to item.openstack if there is a problem
-
-# Create an instance on NeCTAR
+---
+# Create instances on MRC
 - name: Create an instance
   openstack.cloud.server:
     name: "{{ item.name }}"
-    auto_floating_ip: yes
+    auto_floating_ip: false
     availability_zone: "{{ availability_zone }}"
     flavor: "{{ instance_flavor }}"
     image: "{{ instance_image }}"
     key_name: "{{ instance_key_name }}"
-    security_groups: "{{ sg_names }}"
+    # network: "{{ instance_network }}"
+    security_groups: "{{ item.securitygroups }}"
     timeout: 600
-    volumes: "{{ item.volumes }}"
+    volumes: "{{ item.volume }}"
     state: present
     wait: true
   loop: "{{ instances }}"
@@ -26,7 +24,7 @@
 
 - name: Wait for connection
   ansible.builtin.wait_for:
-    host: "{{ item.server.access_ipv4 }}"
+    host: "{{ item['server']['addresses']['qh2-uom-internal'][0]['addr'] }}"
     port: 22
     timeout: 120
     search_regex: OpenSSH
@@ -36,7 +34,7 @@
 # Add hosts to Ansible in-memory inventory
 - name: Add host
   ansible.builtin.add_host:
-    name: "{{ item.server.access_ipv4 }}"
+    name: "{{ item['server']['addresses']['qh2-uom-internal'][0]['addr'] }}"
     groups: COMP90024
   loop: "{{ os_instance.results }}"
   when: item.server is defined
