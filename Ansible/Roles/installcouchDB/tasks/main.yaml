@@ -2,7 +2,7 @@
 - name: Remove existing CouchDB container 
   become: true
   docker_container:
-    name: couchDB
+    name: couchdb
     state: absent
 
 # Create new container with CouchDB
@@ -18,7 +18,7 @@
       - "4369:4369"
       - "9100-9200:9100-9200"
     env:
-      COUCHDB_USER: "{{ couchdb_user }}"
-      COUCHDB_PASSWORD: "{{ couchdb_pass }}"
+      COUCHDB_USER: "{{ admin }}"
+      COUCHDB_PASSWORD: "{{ admin }}"
       NODENAME: "{{ ansible_host }}"
       COUCHDB_SECRET: "{{ couchdb_cookie }}"

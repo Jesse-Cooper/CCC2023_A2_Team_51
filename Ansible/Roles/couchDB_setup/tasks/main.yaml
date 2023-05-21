@@ -12,8 +12,8 @@
   uri:
     url: http://{{ MasterNode }}:5984/_cluster_setup
     method: POST
-    user: "{{ user }}"
-    password: "{{ pass }}"
+    user: "{{ admin }}"
+    password: "{{ admin }}"
     force_basic_auth: yes
     status_code: 200, 201
     body_format: json
@@ -26,8 +26,8 @@
   uri:
     url: http://{{ MasterNode }}:5984/_cluster_setup
     method: POST
-    user: "{{ user }}"
-    password: "{{ pass }}"
+    user: "{{ admin }}"
+    password: "{{ admin }}"
     force_basic_auth: yes
     status_code: 200, 201
     body_format: json
@@ -41,8 +41,8 @@
   uri:
     url: http://{{ MasterNode }}:5984/
     method: GET
-    user: "{{ user }}"
-    password: "{{ pass }}"
+    user: "{{ admin }}"
+    password: "{{ admin }}"
     force_basic_auth: yes
     return_content: yes
 
@@ -50,8 +50,8 @@
   uri:
     url: http://{{ MasterNode }}:5984/_cluster_setup
     method: POST
-    user: "{{ user }}"
-    password: "{{ pass }}"
+    user: "{{ admin }}"
+    password: "{{ admin }}"
     force_basic_auth: yes
     status_code: 200, 201
     body_format: json
