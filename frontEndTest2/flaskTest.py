@@ -9,6 +9,15 @@ app = Flask(__name__)
 CORS(app)
 
 
+
+
+
+
+
+
+
+
+
 @app.route('/generate_plot', methods=['POST'])
 def generate_plot():
     data = request.get_json()
@@ -31,4 +40,4 @@ def generate_plot():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='127.0.0.1', port=8080)
