@@ -1,0 +1,14 @@
+# Setting up CouchDB
+- hosts: CouchDB
+  vars_files:
+    - host_vars/couchdb.yaml
+  gather_facts: false
+  roles:
+    - role: couchdb-install
+
+- hosts: localhost
+  vars_files:
+    - host_vars/couchdb.yaml
+  gather_facts: false
+  roles:
+    - role: couchdb-setup

@@ -1,23 +1,8 @@
-# volumes
-volumes:
-  - device: /dev/vdb
-    mountpoint: /var/lib/docker
-  - device: /dev/vdc
-    mountpoint: /data
-
-# set docker proxy
-proxy_env:
-  HTTP_PROXY: http://wwwproxy.unimelb.edu.au:8000/
-  http_proxy: http://wwwproxy.unimelb.edu.au:8000/
-  HTTPS_PROXY: http://wwwproxy.unimelb.edu.au:8000/
-  https_proxy: http://wwwproxy.unimelb.edu.au:8000/
-  no_proxy: localhost,127.0.0.1,localaddress,172.16.0.0/12,.melbourne.rc.nectar.org.au,.storage.unimelb.edu.au,.cloud.unimelb.edu.au
-    
-    
 # CouchDB configuration
+masternode: "{{ groups['MasterNode'][0] }}"
+docker_volume: couchdb_volume
+docker_container: couchdb
 user: admin
 pass: admin
-image: 'ibmcom/couchdb3:3.0.0'
+image: 'ibmcom/couchdb3:3.2.1'
 cookie: 'a192aeb9904e6590849337933b000c99'
-uuid: 'a192aeb9904e6590849337933b001159'
-bind_address: "0.0.0.0"

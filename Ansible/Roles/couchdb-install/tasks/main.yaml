@@ -1,0 +1,32 @@
+# Remove couchDB if one exist in the container
+- name: Remove existing CouchDB container 
+  become: true
+  community.docker.docker_container:
+    name: "{{ docker_container }}"
+    state: absent
+
+# Create new docker volume for CouchDB 
+- name: Create a volume
+  become: true
+  community.docker.docker_volume:
+    name: "{{ docker_volume }}"
+
+# Create new container with CouchDB
+- name: Start new couchDB container
+  become: true
+  community.docker.docker_container:
+    name: "{{ docker_container }}"
+    image: "{{ image }}"
+    state: started
+    recreate: true
+    ports:
+      - "5984:5984"
+      - "4369:4369"
+      - "9100-9200:9100-9200"
+    volumes:
+      - "{{ docker_volume }}"
+    env:
+      COUCHDB_USER: "{{ user }}"
+      COUCHDB_PASSWORD: "{{ pass }}"
+      COUCHDB_SECRET: "{{ cookie }}"
+      ERL_FLAGS: "-setcookie \"{{ cookie }}\" -name \"couchdb@{{ inventory_hostname }}\""
