@@ -1,9 +1,83 @@
 from flask import Flask
 from flask import render_template, jsonify 
+import csv
+import couchdb
+import json
+import pandas as pd
+import geopandas as gpd
+import folium
 
 app = Flask(__name__)
 app.jinja_env.auto_reload = True
 app.config['TEMPLATES_AUTO_RELOAD'] = True
+
+HOST = "http://admin:admin@172.26.136.58:5984"
+couch = couchdb.Server(HOST)
+db = couch['test_sudo']
+
+#get ids
+i = []
+count = 0
+for docid in db.view('_all_docs'):
+    i.append(docid['id'])
+
+data = []
+for doc_id in i:
+    if not doc_id.startswith('_'):  # Skip special documents
+        doc = db[doc_id]
+        sa2_code = doc.get('sa2_code')
+        sa2_name = doc.get('sa2_name')
+        median_income = doc.get('median_income')
+        female_bus_total = doc.get('female_bus_total')
+        female_train_total = doc.get('female_train_total')
+        female_tram_total = doc.get('female_tram_total')
+        male_bus_total = doc.get('male_bus_total')
+        male_train_total = doc.get('male_train_total')
+        male_tram_total = doc.get('male_tram_total')
+        total_pt = int(female_bus_total) + int(female_train_total) + int(female_tram_total) + int(male_bus_total) + int(male_train_total) + int(male_tram_total)
+        if sa2_code: 
+            data.append({'sa2_code': sa2_code, 'sa2_name': sa2_name, 'median_income': median_income, 'total_pt': total_pt})
+
+
+max = 0
+for i in range(len(data)):
+    if data[i]['total_pt'] > max:
+        max = data[i]['total_pt']
+interval = max/len(data)
+
+sorted_list = sorted(data, key=lambda x: x['total_pt'])
+
+for i in range(len(sorted_list)):
+    sorted_list[i]['total_pt'] = i+1
+
+for i in range(len(data)):
+    sorted_list[i]['total_pt'] = (sorted_list[i]['total_pt']/len(sorted_list)) * 2 - 1
+
+
+for i in range(len(sorted_list)):
+    if sorted_list[i]['median_income'] == '':
+        sorted_list[i]['median_income'] = 0
+    else:
+        sorted_list[i]['median_income'] = float(sorted_list[i]['median_income'])
+max_income = 0
+for i in range(len(sorted_list)):
+    if sorted_list[i]['median_income'] > max_income:
+        max_income = sorted_list[i]['median_income']
+scaling_factor = 2/max_income
+for i in range(len(sorted_list)):
+    sorted_list[i]['median_income'] = sorted_list[i]['median_income'] * scaling_factor - 1
+
+
+geo = gpd.read_file("./data/SA2_2021_AUST_GDA2020.shp")
+df = pd.DataFrame(sorted_list)
+geo = geo[['SA2_NAME21', 'SA3_NAME21', 'geometry']]
+geo = geo.rename(columns={'SA2_NAME21': 'sa2_name'})
+geoJSON = geo.to_json()
+group = pd.merge(geo, df, on='sa2_name', how='inner')
+group = group.groupby(['SA3_NAME21']).mean()
+group = pd.merge(group, geo, on='SA3_NAME21', how='inner').drop(['sa2_name'], axis =1)
+group = group.drop_duplicates(subset=['SA3_NAME21'])
+
 
 #Home Page
 @app.route('/')
@@ -13,6 +87,35 @@ def homepage_test():
 # Sentiment vs. Location
 @app.route('/SentiLocation')
 def sentilocation():
+
+    geo = gpd.read_file("./data/SA3_2021_AUST_GDA2020.shp")
+    geo = geo[['SA3_NAME21', 'geometry']]
+    geo = geo.rename(columns={'SA3_NAME21': 'location'})
+    geo = geo.drop_duplicates(subset=['location'])
+    geoJSON = geo.to_json()
+
+    senti = pd.read_json("./data/modified_data2.json")
+    senti = senti[['location', 'sentiment']]
+
+    group = pd.merge(geo, senti, on='location', how='inner')
+    group = group.groupby(['location']).mean()
+    group = pd.merge(group, geo, on='location', how='inner')
+
+    map = folium.Map(location=[-37.5, 144.5], tiles="Stamen Terrain", zoom_start=8)
+
+    c = folium.Choropleth(
+        geo_data=geoJSON, # geoJSON 
+        name='Sentiment of Tweets', # name of plot
+        data=group, # data source
+        columns=['location','sentiment'], # the columns required
+        key_on='properties.location', # this is from the geoJSON's properties
+        fill_color='YlOrRd', # color scheme
+        nan_fill_color='black',
+        legend_name='Sentiment'
+    )
+    c.add_to(map)
+    map.save('frontend/app/templates/SentiLocation.html')
+
     return render_template('SentiLocation.html')
 
 # Mastodon vs. Twitter
@@ -25,15 +128,52 @@ def mastotwitter():
 def members():
     return render_template('members.html')
 
-#Public transport locations
-@app.route('/TransportLocations')
-def transportlocations():
-    return render_template('transportlocations.html')
-
 #Correlation of between public transport locations and sentiment
 @app.route('/Correlation')
 def correlation():
     return render_template('correlation.html')
+
+#Transport usage in australia
+@app.route('/SUDOTransport')
+def SUDOTransport():
+
+    map = folium.Map(location=[-37.5, 144.5], tiles="Stamen Terrain", zoom_start=8)
+
+    c = folium.Choropleth(
+        geo_data=geoJSON, # geoJSON 
+        name='Transport usage in Australia', # name of plot
+        data=group, # data source
+        columns=['SA3_NAME21','total_pt'], # the columns required
+        key_on='properties.SA3_NAME21', # this is from the geoJSON's properties
+        fill_color='YlOrRd', # color scheme
+        nan_fill_color='black',
+        legend_name='Transport Usage (scaled)'
+    )
+    c.add_to(map)
+    map.save('frontend/app/templates/SUDOTransport.html')
+
+    return render_template('SUDOTransport.html')
+
+#Income in australia
+@app.route('/SUDOIncome')
+def SUDOIncome():
+
+    map = folium.Map(location=[-37.5, 144.5], tiles="Stamen Terrain", zoom_start=8)
+
+    c = folium.Choropleth(
+        geo_data=geoJSON, # geoJSON 
+        name='Income in Australia', # name of plot
+        data=group, # data source
+        columns=['SA3_NAME21','median_income'], # the columns required
+        key_on='properties.SA3_NAME21', # this is from the geoJSON's properties
+        fill_color='YlOrRd', # color scheme
+        nan_fill_color='black',
+        legend_name='Median_income (scaled)'
+    )
+    c.add_to(map)
+    map.save('frontend/app/templates/SUDOTransport.html')
+
+    return render_template('SUDOTransport.html')
 
 
 if __name__ == '__main__':

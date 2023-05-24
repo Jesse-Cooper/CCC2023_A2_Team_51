@@ -28,4 +28,4 @@ c = folium.Choropleth(
     legend_name='Sentiment'
 )
 c.add_to(map)
-map.save('SentiLocation.html')
+map.save('frontend/app/templates/SentiLocation.html')
