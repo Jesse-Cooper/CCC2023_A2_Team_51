@@ -21,11 +21,15 @@ def load_sudo_pt():
     stats = db.view('pt/pt-view', reduce=True)
     stat = [s['value'] for s in stats][0]
 
-    scaling_factor = 2 / (stat['max'] - stat['min'])
-    for i in range(len(data)):
-        data[i]['total_pt'] = (data[i]['total_pt'] - stat['min']) * scaling_factor - 1
-    df = pd.DataFrame(data)
+    sorted_list = sorted(data, key=lambda x: x['total_pt'])
 
+    for i in range(len(sorted_list)):
+        sorted_list[i]['total_pt'] = i+1
+
+    for i in range(len(data)):
+        sorted_list[i]['total_pt'] = (sorted_list[i]['total_pt']/len(sorted_list)) * 2 - 1
+
+    df = pd.DataFrame(sorted_list)
     return df
 
 def load_sudo_income():
@@ -43,18 +47,17 @@ def load_sudo_income():
         data[i]['median_income'] = (data[i]['median_income'] - stat['min']) * scaling_factor - 1
     df = pd.DataFrame(data)
 
-    return df    
+    return df
 
 def combine_geo(df):
-    geo = gpd.read_file("./data/SA3_2021_AUST_GDA2020.shp")
-    geo = geo[['SA3_NAME21', 'geometry']]
+    geo = gpd.read_file("./data/SA2_2021_AUST_GDA2020.shp")    
+    geo = geo[['SA2_NAME21', 'SA3_NAME21', 'geometry']]
     geoJSON = geo.to_json()
-    sa2_sa3 = gpd.read_file("./data/SA2_2021_AUST_GDA2020.shp")
-    sa2_sa3 = sa2_sa3[['SA2_NAME21', 'SA3_NAME21']]
-    group = pd.merge(sa2_sa3, df, on='SA2_NAME21', how='inner')
+    group = pd.merge(geo[['SA2_NAME21', 'SA3_NAME21']], df, on='SA2_NAME21', how='inner')
     group = group.drop(['SA2_NAME21'], axis=1)
     group = group.groupby(['SA3_NAME21']).mean()
-    group = pd.merge(group, geo, on='SA3_NAME21', how='inner')
+    group = pd.merge(group, geo[['SA3_NAME21', 'geometry']], on='SA3_NAME21', how='inner')
+    group = group.drop_duplicates(subset=['SA3_NAME21'])
 
     return geoJSON, group
 
@@ -75,8 +78,9 @@ def sentilocation():
 
     senti = pd.read_json("./data/modified_data2.json")
     senti = senti[['location', 'sentiment']]
-    senti = senti.groupby(['location']).mean()
-    group = pd.merge(senti, geo, on='location', how='inner')
+
+    group = senti.groupby(['location']).mean()
+    group = pd.merge(group, geo, on='location', how='inner')
 
     map = folium.Map(location=[-37.5, 144.5], tiles="Stamen Terrain", zoom_start=8)
 
@@ -112,7 +116,7 @@ def correlation():
 #Transport usage in australia
 @app.route('/SUDOTransport')
 def SUDOTransport():
-    
+
     df = load_sudo_pt()
     geoJSON, group = combine_geo(df)
 
@@ -157,4 +161,4 @@ def SUDOIncome():
 
 
 if __name__ == '__main__':
-    app.run(host = '127.0.0.1', port = int('8080'), debug = True)
+    app.run(host = '0.0.0.0', port = int('8080'), debug = False)
