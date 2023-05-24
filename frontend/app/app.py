@@ -11,73 +11,52 @@ app = Flask(__name__)
 app.jinja_env.auto_reload = True
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
-HOST = "http://admin:admin@172.26.136.58:5984"
-couch = couchdb.Server(HOST)
-db = couch['test_sudo']
+def load_sudo_pt():
+    HOST = "http://admin:admin@172.26.136.58:5984"
+    couch = couchdb.Server(HOST)
+    db = couch['test_sudo']
 
-#get ids
-i = []
-count = 0
-for docid in db.view('_all_docs'):
-    i.append(docid['id'])
+    docs = db.view('pt/pt-view', reduce=False)
+    data = [{'SA2_NAME21': doc['key'], 'total_pt': doc['value']} for doc in docs]
+    stats = db.view('pt/pt-view', reduce=True)
+    stat = [s['value'] for s in stats][0]
 
-data = []
-for doc_id in i:
-    if not doc_id.startswith('_'):  # Skip special documents
-        doc = db[doc_id]
-        sa2_code = doc.get('sa2_code')
-        sa2_name = doc.get('sa2_name')
-        median_income = doc.get('median_income')
-        female_bus_total = doc.get('female_bus_total')
-        female_train_total = doc.get('female_train_total')
-        female_tram_total = doc.get('female_tram_total')
-        male_bus_total = doc.get('male_bus_total')
-        male_train_total = doc.get('male_train_total')
-        male_tram_total = doc.get('male_tram_total')
-        total_pt = int(female_bus_total) + int(female_train_total) + int(female_tram_total) + int(male_bus_total) + int(male_train_total) + int(male_tram_total)
-        if sa2_code: 
-            data.append({'sa2_code': sa2_code, 'sa2_name': sa2_name, 'median_income': median_income, 'total_pt': total_pt})
+    scaling_factor = 2 / (stat['max'] - stat['min'])
+    for i in range(len(data)):
+        data[i]['total_pt'] = (data[i]['total_pt'] - stat['min']) * scaling_factor - 1
+    df = pd.DataFrame(data)
 
+    return df
 
-max = 0
-for i in range(len(data)):
-    if data[i]['total_pt'] > max:
-        max = data[i]['total_pt']
-interval = max/len(data)
+def load_sudo_income():
+    HOST = "http://admin:admin@172.26.136.58:5984"
+    couch = couchdb.Server(HOST)
+    db = couch['test_sudo']
 
-sorted_list = sorted(data, key=lambda x: x['total_pt'])
+    docs = db.view('income/income-view', reduce=False)
+    data = [{'SA2_NAME21': doc['key'], 'median_income': doc['value']} for doc in docs]
+    stats = db.view('income/income-view', reduce=True)
+    stat = [s['value'] for s in stats][0]
 
-for i in range(len(sorted_list)):
-    sorted_list[i]['total_pt'] = i+1
+    scaling_factor = 2 / (stat['max'] - stat['min'])
+    for i in range(len(data)):
+        data[i]['median_income'] = (data[i]['median_income'] - stat['min']) * scaling_factor - 1
+    df = pd.DataFrame(data)
 
-for i in range(len(data)):
-    sorted_list[i]['total_pt'] = (sorted_list[i]['total_pt']/len(sorted_list)) * 2 - 1
+    return df    
 
+def combine_geo(df):
+    geo = gpd.read_file("./data/SA3_2021_AUST_GDA2020.shp")
+    geo = geo[['SA3_NAME21', 'geometry']]
+    geoJSON = geo.to_json()
+    sa2_sa3 = gpd.read_file("./data/SA2_2021_AUST_GDA2020.shp")
+    sa2_sa3 = sa2_sa3[['SA2_NAME21', 'SA3_NAME21']]
+    group = pd.merge(sa2_sa3, df, on='SA2_NAME21', how='inner')
+    group = group.drop(['SA2_NAME21'], axis=1)
+    group = group.groupby(['SA3_NAME21']).mean()
+    group = pd.merge(group, geo, on='SA3_NAME21', how='inner')
 
-for i in range(len(sorted_list)):
-    if sorted_list[i]['median_income'] == '':
-        sorted_list[i]['median_income'] = 0
-    else:
-        sorted_list[i]['median_income'] = float(sorted_list[i]['median_income'])
-max_income = 0
-for i in range(len(sorted_list)):
-    if sorted_list[i]['median_income'] > max_income:
-        max_income = sorted_list[i]['median_income']
-scaling_factor = 2/max_income
-for i in range(len(sorted_list)):
-    sorted_list[i]['median_income'] = sorted_list[i]['median_income'] * scaling_factor - 1
-
-
-geo = gpd.read_file("./data/SA2_2021_AUST_GDA2020.shp")
-df = pd.DataFrame(sorted_list)
-geo = geo[['SA2_NAME21', 'SA3_NAME21', 'geometry']]
-geo = geo.rename(columns={'SA2_NAME21': 'sa2_name'})
-geoJSON = geo.to_json()
-group = pd.merge(geo, df, on='sa2_name', how='inner')
-group = group.groupby(['SA3_NAME21']).mean()
-group = pd.merge(group, geo, on='SA3_NAME21', how='inner').drop(['sa2_name'], axis =1)
-group = group.drop_duplicates(subset=['SA3_NAME21'])
-
+    return geoJSON, group
 
 #Home Page
 @app.route('/')
@@ -96,10 +75,8 @@ def sentilocation():
 
     senti = pd.read_json("./data/modified_data2.json")
     senti = senti[['location', 'sentiment']]
-
-    group = pd.merge(geo, senti, on='location', how='inner')
-    group = group.groupby(['location']).mean()
-    group = pd.merge(group, geo, on='location', how='inner')
+    senti = senti.groupby(['location']).mean()
+    group = pd.merge(senti, geo, on='location', how='inner')
 
     map = folium.Map(location=[-37.5, 144.5], tiles="Stamen Terrain", zoom_start=8)
 
@@ -114,9 +91,8 @@ def sentilocation():
         legend_name='Sentiment'
     )
     c.add_to(map)
-    map.save('frontend/app/templates/SentiLocation.html')
 
-    return render_template('SentiLocation.html')
+    return map.get_root().render()
 
 # Mastodon vs. Twitter
 @app.route('/MastoTwitter')
@@ -136,6 +112,9 @@ def correlation():
 #Transport usage in australia
 @app.route('/SUDOTransport')
 def SUDOTransport():
+    
+    df = load_sudo_pt()
+    geoJSON, group = combine_geo(df)
 
     map = folium.Map(location=[-37.5, 144.5], tiles="Stamen Terrain", zoom_start=8)
 
@@ -150,13 +129,15 @@ def SUDOTransport():
         legend_name='Transport Usage (scaled)'
     )
     c.add_to(map)
-    map.save('frontend/app/templates/SUDOTransport.html')
 
-    return render_template('SUDOTransport.html')
+    return map.get_root().render()
 
 #Income in australia
 @app.route('/SUDOIncome')
 def SUDOIncome():
+
+    df = load_sudo_income()
+    geoJSON, group = combine_geo(df)
 
     map = folium.Map(location=[-37.5, 144.5], tiles="Stamen Terrain", zoom_start=8)
 
@@ -171,9 +152,8 @@ def SUDOIncome():
         legend_name='Median_income (scaled)'
     )
     c.add_to(map)
-    map.save('frontend/app/templates/SUDOTransport.html')
 
-    return render_template('SUDOTransport.html')
+    return map.get_root().render()
 
 
 if __name__ == '__main__':
