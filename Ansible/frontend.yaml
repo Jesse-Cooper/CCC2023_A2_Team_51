@@ -1,0 +1,7 @@
+- hosts: FrontEnd
+  vars_files:
+    - host_vars/frontend.yaml
+  gather_facts: false
+
+  roles:
+    - role: frontend-setup

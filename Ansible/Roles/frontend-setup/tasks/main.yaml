@@ -1,0 +1,10 @@
+# Create new container with Flask server
+- name: Start new flask container
+  become: true
+  community.docker.docker_container:
+    name: "{{ docker_container }}"
+    image: "{{ image }}"
+    state: started
+    recreate: true
+    ports:
+      - "80:8080"
