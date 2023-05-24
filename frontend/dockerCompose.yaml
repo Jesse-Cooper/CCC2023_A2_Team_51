@@ -1,9 +1,0 @@
-# dockerCompose is kind of an extension to docker 
-version: '3'
-
-services:
-  web:
-    build: .
-    # it will return an error if the port is blocked by another container 
-    ports: 
-      - "5000"
