@@ -10,7 +10,7 @@
     body: "{\"action\": \"enable_cluster\", \"bind_address\": \"0.0.0.0\", \"username\":\"{{ user }}\", \"password\": \"{{ pass }}\", \"port\": \"5984\", \"remote_node\": \"{{ item }}\", \"node_count\": \"3\",\"remote_current_user\": \"{{ user }}\", \"remote_current_password\":\"{{ pass }}\"}"
     headers:
       Content-Type: "application/json" 
-  loop: "{{ groups['WorkerNode'] }}"
+  loop: "{{ groups['CouchDB'] }}"
 
 - name: Join nodes to CouchDB cluster
   ansible.builtin.uri:
@@ -24,7 +24,7 @@
     body: "{\"action\":\"add_node\",\"host\":\"{{ item }}\",\"port\":\"5984\",\"username\":\"{{ user }}\",\"password\":\"{{ pass }}\"}"
     headers:
       Content-Type: "application/json"  
-  loop: "{{ groups['WorkerNode'] }}"
+  loop: "{{ groups['CouchDB'] }}"
 
 - name: Finish cluster setup
   ansible.builtin.uri:
