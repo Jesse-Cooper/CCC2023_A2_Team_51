@@ -9,10 +9,14 @@
 * Jin Yuan Hee (1072295)
 
 
-## Topic (not final)
+## Topic
+The two scenarios that are supported by the system and that were investigated was:
 
-Sentiment of public transport around Australia by income/age compared to the sentiment around the world.
+• Does income affect the sentiment of public transport tweets
 
-* This is only a general area for the topic (will become more specific later)
-* Can also compare with other states like education...
-* It would be the sentiment of the whole of Australia to the world (would not compare with income/age)
+• Does public transport usage affect the sentiment of public transport tweets
+
+Both analyses of these can be seen in the system on their respective webpage maps, as well as the
+correlation webpage.
+Both analyses found inversely proportional relationships, indicating that wealthy and high public
+transport usage area are more likely to tweet negatively about public transport in their areas.
