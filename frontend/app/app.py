@@ -11,6 +11,19 @@ app = Flask(__name__)
 app.jinja_env.auto_reload = True
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
+def load_senti():
+    HOST = "http://admin:admin@172.26.136.58:5984"
+    couch = couchdb.Server(HOST)
+    db = couch['senti']
+
+    docs = db.view('senti/senti-view', reduce=False)
+    data = [{'SA3_NAME21': doc['key'], 'sentiment': doc['value']} for doc in docs]
+    stats = db.view('senti/senti-view', reduce=True)
+    stat = [s['value'] for s in stats][0]
+
+    df = pd.DataFrame(data)
+    return df
+
 def load_sudo_pt():
     HOST = "http://admin:admin@172.26.136.58:5984"
     couch = couchdb.Server(HOST)
@@ -72,15 +85,12 @@ def sentilocation():
 
     geo = gpd.read_file("./data/SA3_2021_AUST_GDA2020.shp")
     geo = geo[['SA3_NAME21', 'geometry']]
-    geo = geo.rename(columns={'SA3_NAME21': 'location'})
-    geo = geo.drop_duplicates(subset=['location'])
+    geo = geo.drop_duplicates(subset=['SA3_NAME21'])
     geoJSON = geo.to_json()
 
-    senti = pd.read_json("./data/modified_data2.json")
-    senti = senti[['location', 'sentiment']]
-
-    group = senti.groupby(['location']).mean()
-    group = pd.merge(group, geo, on='location', how='inner')
+    df = load_senti()
+    group = df.groupby(['SA3_NAME21']).mean()
+    group = pd.merge(group, geo, on='SA3_NAME21', how='inner')
 
     map = folium.Map(location=[-37.5, 144.5], tiles="Stamen Terrain", zoom_start=8)
 
@@ -88,8 +98,8 @@ def sentilocation():
         geo_data=geoJSON, # geoJSON 
         name='Sentiment of Tweets', # name of plot
         data=group, # data source
-        columns=['location','sentiment'], # the columns required
-        key_on='properties.location', # this is from the geoJSON's properties
+        columns=['SA3_NAME21','sentiment'], # the columns required
+        key_on='properties.SA3_NAME21', # this is from the geoJSON's properties
         fill_color='YlOrRd', # color scheme
         nan_fill_color='black',
         legend_name='Sentiment'

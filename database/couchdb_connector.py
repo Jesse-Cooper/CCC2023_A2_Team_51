@@ -1,4 +1,6 @@
 import couchdb
+import json
+import csv
 
 USERNAME = "admin"
 PASSWORD = "admin"
@@ -32,11 +34,39 @@ class Connector:
         except:
             self.database = self.server.create(database)
 
-    def put(self, id, doc):
+    def _put_doc(self, doc):
+        self.database.save(doc)
+
+    def _put_docs(self, docs):
+        for doc in docs:
+            self._put_doc(doc)
+
+    def put(self, doc):
         """
         Put document onto the couchdb datebase
 
         Parameters:
             doc: the doc to put
         """
-        self.database[id] = doc
+        if isinstance(doc, dict):
+            self._put_doc(doc)
+            return
+        
+        if isinstance(doc, list):
+            self._put_docs(doc)
+            return
+
+        if isinstance(doc, str):
+
+            if doc.split('.')[-1] == "json":
+                with open(doc, "r") as file:
+                    doc_json = json.load(file)
+                self.put(doc_json)
+                return
+    
+            if doc.split('.')[-1] == "csv":
+                with open(doc, "r") as file:
+                    rows = csv.DictReader(file)
+                    for row in rows:
+                        self._put_doc(row)
+                return

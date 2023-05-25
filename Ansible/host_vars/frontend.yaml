@@ -1,2 +1,2 @@
 docker_container: flask
-image: 'chienpul/docker-flask:1.1.0'
+image: 'chienpul/docker-flask:1.2.0'
